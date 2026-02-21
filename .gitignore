@@ -1,0 +1,40 @@
+# --- Wails Binaries ---
+build/bin/
+build/windows/
+build/darwin/
+build/linux/
+
+# --- Frontend Dependencies ---
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+
+# --- Go Dependencies & Binaries ---
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# --- Database Lokal (PENTING) ---
+# Jangan masukkan database SQLite kamu ke Git
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+.sparklewash/
+
+# --- IDE & OS Files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+startup_error.txt
+debug_log.txt
+db_error.txt
+
+# --- Environment Variables ---
+.env
