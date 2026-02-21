@@ -1,8 +1,8 @@
 name: Wails Build
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main  # Build akan jalan setiap kali kamu push ke branch main
 
 jobs:
   build:
@@ -45,13 +45,3 @@ jobs:
         with:
           name: SparkleWash-${{ matrix.os }}
           path: build/bin/*
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            build/bin/*.exe
-            build/bin/*.app
-            build/bin/*installer.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
