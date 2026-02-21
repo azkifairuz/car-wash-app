@@ -34,9 +34,8 @@ jobs:
       - name: Build Application
         shell: bash
         run: |
-          # Tambahkan flag -package untuk Windows agar jadi Installer (.exe dengan NSIS)
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            wails build -platform ${{ matrix.platform }} -package -clean
+            wails build -platform ${{ matrix.platform }}  -clean
           else
             wails build -platform ${{ matrix.platform }} -clean
           fi
