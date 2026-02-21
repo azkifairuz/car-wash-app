@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "carwash-app",
+  "outputfilename": "SparkleWash",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Prosesin.id",
+    "email": "azkiajmal@gmail.com"
+  },
+  "info": {
+    "productName": "SparkleWash POS",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2026 Prosesin.id",
+    "comments": "Aplikasi Kasir Carwash dan Cafe"
+  }
+}
