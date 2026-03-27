@@ -9,29 +9,57 @@
           <button :class="['tab-btn', { active: tab === 'food' }]" @click="tab='food'">🍽️ Makanan & Minuman</button>
         </div>
 
-        <div v-if="tab==='wash'" class="menu-grid">
-          <div v-for="p in packages" :key="p.id" class="menu-card" @click="addToCart(p,'package')">
-            <span class="mc-icon">{{ p.icon }}</span>
-            <div class="mc-info">
-              <span class="mc-name">{{ p.name }}</span>
-              <span class="mc-desc">{{ p.description }}</span>
-              <div class="mc-meta"><span class="mc-price">{{ fmt(p.price) }}</span><span class="mc-dur">⏱ {{ p.duration }} mnt</span></div>
-            </div>
-          </div>
+        <div v-if="tab==='wash'" class="list-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="50" class="center-text">Icon</th>
+                <th>Paket Layanan</th>
+                <th width="100">Waktu</th>
+                <th width="120">Harga</th>
+                <th width="80" class="center-text">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in packages" :key="p.id" @click="addToCart(p,'package')">
+                <td class="center-text"><span class="td-icon">{{ p.icon }}</span></td>
+                <td>
+                  <div class="td-name">{{ p.name }}</div>
+                  <div class="td-desc">{{ p.description }}</div>
+                </td>
+                <td><span class="td-meta">⏱ {{ p.duration }} mnt</span></td>
+                <td class="td-price">{{ fmt(p.price) }}</td>
+                <td class="center-text"><button class="td-add-btn">+ Tambahkan</button></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div v-if="tab==='food'">
+        <div v-if="tab==='food'" class="list-container-wrap">
           <div class="sub-tabs">
             <button v-for="c in foodCats" :key="c.key" :class="['sub-tab',{active:foodCat===c.key}]" @click="foodCat=c.key">{{ c.icon }} {{ c.label }}</button>
           </div>
-          <div class="menu-grid food-grid">
-            <div v-for="m in filteredMenu" :key="m.id" class="menu-card" @click="addToCart(m,'menu')">
-              <span class="mc-icon">{{ m.icon }}</span>
-              <div class="mc-info">
-                <span class="mc-name">{{ m.name }}</span>
-                <div class="mc-meta"><span class="mc-price">{{ fmt(m.price) }}</span><span class="mc-stock">Stok: {{ m.stock }}</span></div>
-              </div>
-            </div>
+          <div class="list-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th width="50" class="center-text">Icon</th>
+                  <th>Nama Menu</th>
+                  <th width="100">Stok</th>
+                  <th width="120">Harga</th>
+                  <th width="80" class="center-text">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="m in filteredMenu" :key="m.id" @click="addToCart(m,'menu')">
+                  <td class="center-text"><span class="td-icon">{{ m.icon }}</span></td>
+                  <td><div class="td-name">{{ m.name }}</div></td>
+                  <td><span class="td-meta">Stok: {{ m.stock }}</span></td>
+                  <td class="td-price">{{ fmt(m.price) }}</td>
+                  <td class="center-text"><button class="td-add-btn">+ Tambahkan</button></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -78,18 +106,22 @@
             <div class="form-group"><label class="label">No. Plat</label><input class="input" v-model="customer.plate" placeholder="B 1234 XX" /></div>
             <div class="form-group"><label class="label">Kendaraan</label><input class="input" v-model="customer.car" placeholder="Toyota Avanza" /></div>
           </div>
-          <div class="form-group">
-            <label class="label">Pembayaran</label>
-            <div class="pay-grid">
-              <button v-for="pm in payMethods" :key="pm" :class="['pay-btn',{active:customer.payment===pm.v}]" @click="customer.payment=pm.v">{{ pm.i }} {{ pm.l }}</button>
-            </div>
-          </div>
         </div>
 
         <button class="btn btn-primary submit-btn" :disabled="cart.length===0||submitting" @click="submitOrder">
           {{ submitting ? '⏳ Memproses...' : '✅ Buat Order' }}
         </button>
-        <div v-if="successMsg" class="toast toast-success">{{ successMsg }}</div>
+
+        <!-- Success + Print buttons -->
+        <div v-if="lastOrderId" class="print-section">
+          <div class="toast toast-success">✅ Order berhasil dibuat!</div>
+          <div class="print-actions">
+            <button class="btn print-btn" @click="handlePrint" :disabled="printing">
+              {{ printing ? '⏳ Mencetak...' : '🖨️ Cetak Struk' }}
+            </button>
+            <button class="btn print-btn-secondary" @click="lastOrderId = null">✕ Tutup</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -108,11 +140,14 @@ const discounts = ref([])
 const cart = ref([])
 const selectedDiscount = ref(null)
 const submitting = ref(false)
-const successMsg = ref('')
-const customer = ref({ name: '', plate: '', car: '', payment: 'cash' })
+const printing = ref(false)
+const customer = ref({ name: '', plate: '', car: '' })
+
+// Last order tracking for print
+const lastOrderId = ref(null)
+const lastOrderData = ref(null)
 
 const foodCats = [{ key:'all', icon:'📋', label:'Semua' },{ key:'makanan', icon:'🍛', label:'Makanan' },{ key:'minuman', icon:'🥤', label:'Minuman' },{ key:'snack', icon:'🍟', label:'Snack' }]
-const payMethods = [{ v:'cash', i:'💵', l:'Cash' },{ v:'debit', i:'💳', l:'Debit' },{ v:'qris', i:'📱', l:'QRIS' },{ v:'transfer', i:'🏦', l:'Transfer' }]
 
 const filteredMenu = computed(() => foodCat.value === 'all' ? menuItems.value : menuItems.value.filter(m => m.category === foodCat.value))
 const subtotal = computed(() => cart.value.reduce((s, i) => s + i.price * i.quantity, 0))
@@ -135,18 +170,84 @@ async function submitOrder() {
   submitting.value = true
   try {
     const discId = selectedDiscount.value || null
-    await callBackend('CreateTransaction', customer.value.name || 'Walk-in', customer.value.plate || '-', customer.value.car || '-', customer.value.payment, cart.value, discId)
-    cart.value = []; selectedDiscount.value = null; customer.value = { name:'', plate:'', car:'', payment:'cash' }
-    successMsg.value = '✅ Order berhasil dibuat!'
-    setTimeout(() => successMsg.value = '', 3000)
+    const tx = await callBackend('CreateTransaction', customer.value.name || 'Walk-in', customer.value.plate || '-', customer.value.car || '-', 'pending', cart.value, discId)
+
+    // Store order ID for printing
+    if (tx && tx.id) {
+      lastOrderId.value = tx.id
+    }
+
+    // Also build direct print data as fallback
+    lastOrderData.value = JSON.stringify({
+      invoiceNo: tx?.invoiceNo || ('INV-' + Date.now().toString().slice(-6)),
+      date: new Date().toLocaleString('id-ID'),
+      customerName: customer.value.name || 'Walk-in',
+      plateNumber: customer.value.plate || '-',
+      carType: customer.value.car || '-',
+      items: cart.value.map(item => ({
+        name: item.itemName,
+        qty: item.quantity,
+        price: item.price,
+        subtotal: item.price * item.quantity,
+      })),
+      subtotal: subtotal.value,
+      discountAmount: discountAmount.value,
+      total: total.value,
+      paymentMethod: 'pending',
+      cashierName: '',
+    })
+
+    // Reset form
+    cart.value = []
+    selectedDiscount.value = null
+    customer.value = { name:'', plate:'', car:'' }
+
     await loadData()
-  } catch (e) { alert(e.message || 'Gagal membuat order') }
-  finally { submitting.value = false }
+
+    // Auto print if enabled
+    try {
+      const cfg = await callBackend('GetPrinterConfig')
+      if (cfg && cfg.autoPrint) {
+        await handlePrint()
+      }
+    } catch (e) {
+      // Auto print not critical, ignore
+    }
+  } catch (e) {
+    alert(e.message || 'Gagal membuat order')
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function handlePrint() {
+  printing.value = true
+  try {
+    // Method 1: Print by transaction ID (preferred - data from DB)
+    if (lastOrderId.value) {
+      await callBackend('PrintReceipt', lastOrderId.value)
+      return
+    }
+    // Method 2: Print from direct data (fallback)
+    if (lastOrderData.value) {
+      await callBackend('PrintReceiptDirect', lastOrderData.value)
+      return
+    }
+    alert('Tidak ada data order untuk dicetak')
+  } catch (e) {
+    alert('Gagal cetak: ' + (e.message || e))
+  } finally {
+    printing.value = false
+  }
 }
 
 async function loadData() {
   try {
-    const [p, m, d] = await Promise.all([callBackend('GetActivePackages'), callBackend('GetActiveMenuItems'), callBackend('GetActiveDiscounts')])
+    const [p, m, d] = await Promise.all([
+      callBackend('GetActivePackages'),
+      callBackend('GetActiveMenuItems'),
+      callBackend('GetActiveDiscounts'),
+    ])
     if (p) packages.value = p
     if (m) menuItems.value = m
     if (d) discounts.value = d
@@ -165,18 +266,26 @@ onMounted(loadData)
 .sub-tabs{display:flex;gap:6px;margin-bottom:12px}
 .sub-tab{padding:5px 12px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--t3);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
 .sub-tab.active{background:var(--surface);border-color:var(--cyan);color:var(--cyan)}
-.menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;overflow-y:auto;flex:1;padding-right:6px}
-.food-grid{grid-template-columns:repeat(3,1fr)}
-.menu-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:.2s;display:flex;gap:10px}
-.menu-card:hover{border-color:var(--cyan);background:var(--card-h);transform:translateY(-1px)}
-.menu-card:active{transform:scale(.98)}
-.mc-icon{font-size:26px;flex-shrink:0}
-.mc-info{display:flex;flex-direction:column;gap:3px;min-width:0}
-.mc-name{font-weight:700;font-size:13px}
-.mc-desc{font-size:11px;color:var(--t3);line-height:1.3}
-.mc-meta{display:flex;gap:10px;margin-top:3px}
-.mc-price{font-weight:700;font-size:13px;color:var(--cyan)}
-.mc-dur,.mc-stock{font-size:10px;color:var(--t3)}
+.list-container { overflow-y: auto; flex: 1; padding-right: 6px; }
+.list-container-wrap { display: flex; flex-direction: column; overflow-y: hidden; flex: 1; }
+.data-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border-radius: var(--r); border: 1px solid var(--border); }
+.data-table thead th { background: var(--surface); padding: 10px 14px; text-align: left; font-size: 11px; color: var(--t3); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.data-table thead th:first-child { border-top-left-radius: var(--r); }
+.data-table thead th:last-child { border-top-right-radius: var(--r); }
+.data-table tbody tr { cursor: pointer; transition: 0.2s; }
+.data-table tbody tr:hover { background: var(--card-h); }
+.data-table tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:last-child td:first-child { border-bottom-left-radius: var(--r); }
+.data-table tbody tr:last-child td:last-child { border-bottom-right-radius: var(--r); }
+.center-text { text-align: center !important; }
+.td-icon { font-size: 20px; }
+.td-name { font-weight: 700; font-size: 13px; color: var(--t1); margin-bottom: 2px; }
+.td-desc { font-size: 11px; color: var(--t3); line-height: 1.3; }
+.td-meta { font-size: 10px; color: var(--t3); background: var(--surface); padding: 3px 8px; border-radius: 12px; }
+.td-price { font-weight: 700; font-size: 13px; color: var(--cyan); }
+.td-add-btn { padding: 6px 12px; border-radius: var(--rs); border: 1px solid var(--border); background: var(--surface); color: var(--t2); font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.data-table tbody tr:hover .td-add-btn { border-color: var(--cyan); background: var(--cyan-g); color: var(--cyan); }
 .cart-panel{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
 .cart-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px}
 .cart-title{font-size:14px;font-weight:700;margin-bottom:10px}
@@ -193,10 +302,15 @@ onMounted(loadData)
 .cart-summary{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
 .sum-row{display:flex;justify-content:space-between;font-size:13px;color:var(--t2)}
 .sum-row.discount{color:var(--green)}
-.sum-row.total{font-size:18px;font-weight:800;color:var(--t1);padding-top:6px;border-top:1px solid var(--border)}
 .sum-row.total span:last-child{color:var(--cyan)}
-.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pay-btn{padding:8px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);color:var(--t2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
-.pay-btn.active{border-color:var(--cyan);background:var(--cyan-g);color:var(--cyan)}
 .submit-btn{width:100%;padding:12px;justify-content:center;font-size:15px}
+
+/* Print section */
+.print-section{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.print-actions{display:flex;gap:8px}
+.print-btn{flex:1;padding:10px;border-radius:var(--rs);border:1px solid var(--cyan);background:var(--cyan-g);color:var(--cyan);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;text-align:center}
+.print-btn:hover:not(:disabled){background:var(--cyan);color:#fff}
+.print-btn:disabled{opacity:.6;cursor:not-allowed}
+.print-btn-secondary{padding:10px 16px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);color:var(--t3);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.print-btn-secondary:hover{border-color:var(--red);color:var(--red)}
 </style>

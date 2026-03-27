@@ -10,6 +10,10 @@ export function CreateDiscount(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['backend']['App']['CreateDiscount'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+export function CreateExpense(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['backend']['App']['CreateExpense'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function CreateMenuItem(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['backend']['App']['CreateMenuItem'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -32,6 +36,10 @@ export function CreateUser(arg1, arg2, arg3, arg4) {
 
 export function DeleteDiscount(arg1) {
   return window['go']['backend']['App']['DeleteDiscount'](arg1);
+}
+
+export function DeleteExpense(arg1) {
+  return window['go']['backend']['App']['DeleteExpense'](arg1);
 }
 
 export function DeleteMenuItem(arg1) {
@@ -74,12 +82,20 @@ export function GetDiscounts() {
   return window['go']['backend']['App']['GetDiscounts']();
 }
 
+export function GetExpenses(arg1, arg2) {
+  return window['go']['backend']['App']['GetExpenses'](arg1, arg2);
+}
+
 export function GetMenuItems() {
   return window['go']['backend']['App']['GetMenuItems']();
 }
 
 export function GetPackages() {
   return window['go']['backend']['App']['GetPackages']();
+}
+
+export function GetPrinterConfig() {
+  return window['go']['backend']['App']['GetPrinterConfig']();
 }
 
 export function GetShifts(arg1, arg2) {
@@ -94,6 +110,10 @@ export function GetTransactions(arg1, arg2, arg3) {
   return window['go']['backend']['App']['GetTransactions'](arg1, arg2, arg3);
 }
 
+export function GetTransactionsForExport(arg1, arg2) {
+  return window['go']['backend']['App']['GetTransactionsForExport'](arg1, arg2);
+}
+
 export function GetUsers() {
   return window['go']['backend']['App']['GetUsers']();
 }
@@ -106,6 +126,18 @@ export function Logout() {
   return window['go']['backend']['App']['Logout']();
 }
 
+export function PrintReceipt(arg1) {
+  return window['go']['backend']['App']['PrintReceipt'](arg1);
+}
+
+export function PrintReceiptDirect(arg1) {
+  return window['go']['backend']['App']['PrintReceiptDirect'](arg1);
+}
+
+export function ProcessPayment(arg1, arg2) {
+  return window['go']['backend']['App']['ProcessPayment'](arg1, arg2);
+}
+
 export function ResetPassword(arg1, arg2) {
   return window['go']['backend']['App']['ResetPassword'](arg1, arg2);
 }
@@ -114,8 +146,20 @@ export function SaveExcelFile(arg1, arg2) {
   return window['go']['backend']['App']['SaveExcelFile'](arg1, arg2);
 }
 
+export function SavePrinterConfig(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
+  return window['go']['backend']['App']['SavePrinterConfig'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+}
+
+export function TestPrinter() {
+  return window['go']['backend']['App']['TestPrinter']();
+}
+
 export function UpdateDiscount(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
   return window['go']['backend']['App']['UpdateDiscount'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+}
+
+export function UpdateExpense(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['backend']['App']['UpdateExpense'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 export function UpdateMenuItem(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {

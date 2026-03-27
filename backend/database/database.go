@@ -48,6 +48,7 @@ func Initialize() error {
 		&models.Discount{},
 		&models.Transaction{},
 		&models.TransactionItem{},
+		&models.Expense{},
 	)
 	if err != nil {
 		return fmt.Errorf("migration failed: %w", err)

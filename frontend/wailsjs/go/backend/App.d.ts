@@ -7,6 +7,8 @@ export function CancelTransaction(arg1:number):Promise<void>;
 
 export function CreateDiscount(arg1:string,arg2:string,arg3:number,arg4:number,arg5:string,arg6:string):Promise<models.Discount>;
 
+export function CreateExpense(arg1:string,arg2:string,arg3:string,arg4:number,arg5:string):Promise<models.Expense>;
+
 export function CreateMenuItem(arg1:string,arg2:number,arg3:string,arg4:string,arg5:number):Promise<models.MenuItem>;
 
 export function CreatePackage(arg1:string,arg2:string,arg3:number,arg4:number,arg5:string,arg6:string):Promise<models.WashPackage>;
@@ -18,6 +20,8 @@ export function CreateTransaction(arg1:string,arg2:string,arg3:string,arg4:strin
 export function CreateUser(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.User>;
 
 export function DeleteDiscount(arg1:number):Promise<void>;
+
+export function DeleteExpense(arg1:number):Promise<void>;
 
 export function DeleteMenuItem(arg1:number):Promise<void>;
 
@@ -39,9 +43,13 @@ export function GetDashboardStats(arg1:string,arg2:string):Promise<models.Dashbo
 
 export function GetDiscounts():Promise<Array<models.Discount>>;
 
+export function GetExpenses(arg1:string,arg2:string):Promise<Array<models.Expense>>;
+
 export function GetMenuItems():Promise<Array<models.MenuItem>>;
 
 export function GetPackages():Promise<Array<models.WashPackage>>;
+
+export function GetPrinterConfig():Promise<backend.PrinterConfig>;
 
 export function GetShifts(arg1:string,arg2:string):Promise<Array<models.Shift>>;
 
@@ -49,17 +57,31 @@ export function GetTodayTransactions():Promise<Array<models.Transaction>>;
 
 export function GetTransactions(arg1:string,arg2:string,arg3:string):Promise<Array<models.Transaction>>;
 
+export function GetTransactionsForExport(arg1:string,arg2:string):Promise<backend.ExportTransactionResult>;
+
 export function GetUsers():Promise<Array<models.User>>;
 
 export function Login(arg1:string,arg2:string):Promise<models.LoginResponse>;
 
 export function Logout():Promise<void>;
 
+export function PrintReceipt(arg1:number):Promise<void>;
+
+export function PrintReceiptDirect(arg1:string):Promise<void>;
+
+export function ProcessPayment(arg1:number,arg2:string):Promise<void>;
+
 export function ResetPassword(arg1:number,arg2:string):Promise<void>;
 
 export function SaveExcelFile(arg1:string,arg2:string):Promise<string>;
 
+export function SavePrinterConfig(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:string,arg9:string,arg10:boolean):Promise<backend.PrinterConfig>;
+
+export function TestPrinter():Promise<void>;
+
 export function UpdateDiscount(arg1:number,arg2:string,arg3:string,arg4:number,arg5:number,arg6:string,arg7:string,arg8:boolean):Promise<models.Discount>;
+
+export function UpdateExpense(arg1:number,arg2:string,arg3:string,arg4:string,arg5:number,arg6:string):Promise<models.Expense>;
 
 export function UpdateMenuItem(arg1:number,arg2:string,arg3:number,arg4:string,arg5:string,arg6:number,arg7:boolean):Promise<models.MenuItem>;
 

@@ -143,3 +143,18 @@ type DashboardStats struct {
 	FoodOrdersToday   int     `json:"foodOrdersToday"`
 	MonthlyRevenue    float64 `json:"monthlyRevenue"`
 }
+
+// ============================================================
+// Expenses (Pengeluaran)
+// ============================================================
+
+type Expense struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Date      string    `json:"date" gorm:"not null"`     // "2026-03-27"
+	Category  string    `json:"category" gorm:"not null"` // "upah" or "pengeluaran"
+	Name      string    `json:"name" gorm:"not null"`
+	Amount    float64   `json:"amount" gorm:"not null"`
+	Notes     string    `json:"notes"`
+	CreatedAt time.Time `json:"createdAt" ts_type:"string"`
+	UpdatedAt time.Time `json:"updatedAt" ts_type:"string"`
+}

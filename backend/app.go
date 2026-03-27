@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -422,7 +423,96 @@ func (a *App) GetTransactions(status, dateFrom, dateTo string) []models.Transact
 	q.Find(&txs)
 	return txs
 }
+type DailyExportRow struct {
+    Date        string             `json:"date"`
+    DayName     string             `json:"dayName"`
+    Pendapatan  float64            `json:"pendapatan"`
+    Detailing   float64            `json:"detailing"`
+    TotalKend   int                `json:"totalKend"`
+    KendByType  map[string]int     `json:"kendByType"`
+}
 
+type ExportTransactionResult struct {
+    Rows           []DailyExportRow `json:"rows"`
+    TotalPendapatan float64         `json:"totalPendapatan"`
+    TotalDetailing  float64         `json:"totalDetailing"`
+    TotalKend       int             `json:"totalKend"`
+    KendByType      map[string]int  `json:"kendByType"`
+}
+
+func (a *App) GetTransactionsForExport(dateFrom, dateTo string) ExportTransactionResult {
+    var txs []models.Transaction
+    q := db().Preload("Items").Preload("Discount").Preload("Cashier").
+        Where("status = ?", "paid").
+        Order("created_at ASC")
+    if dateFrom != "" {
+        q = q.Where("DATE(created_at) >= ?", dateFrom)
+    }
+    if dateTo != "" {
+        q = q.Where("DATE(created_at) <= ?", dateTo)
+    }
+    q.Find(&txs)
+
+    dayNames := []string{"Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"}
+    dailyMap := map[string]*DailyExportRow{}
+    dateOrder := []string{}
+
+    totalKendByType := map[string]int{}
+
+    for _, tx := range txs {
+        d := tx.CreatedAt.Format("2006-01-02")
+        if _, ok := dailyMap[d]; !ok {
+            dt := tx.CreatedAt
+            dailyMap[d] = &DailyExportRow{
+                Date:       d,
+                DayName:    dayNames[dt.Weekday()],
+                KendByType: map[string]int{},
+            }
+            dateOrder = append(dateOrder, d)
+        }
+        row := dailyMap[d]
+        row.TotalKend++
+        carType := tx.CarType
+        if carType == "" {
+            carType = "Lainnya"
+        }
+        row.KendByType[carType]++
+        totalKendByType[carType]++
+
+        for _, it := range tx.Items {
+            if it.ItemType == "package" {
+                lower := strings.ToLower(it.ItemName)
+                if strings.Contains(lower, "detailing") || strings.Contains(lower, "coating") || strings.Contains(lower, "salon") {
+                    row.Detailing += it.Subtotal
+                } else {
+                    row.Pendapatan += it.Subtotal
+                }
+            }
+        }
+        if len(tx.Items) == 0 {
+            row.Pendapatan += tx.Total
+        }
+    }
+
+    var rows []DailyExportRow
+    var totPendapatan, totDetailing float64
+    var totKend int
+    for _, d := range dateOrder {
+        r := dailyMap[d]
+        rows = append(rows, *r)
+        totPendapatan += r.Pendapatan
+        totDetailing += r.Detailing
+        totKend += r.TotalKend
+    }
+
+    return ExportTransactionResult{
+        Rows:            rows,
+        TotalPendapatan: totPendapatan,
+        TotalDetailing:  totDetailing,
+        TotalKend:       totKend,
+        KendByType:      totalKendByType,
+    }
+}
 func (a *App) GetTodayTransactions() []models.Transaction {
 	today := time.Now().Format("2006-01-02")
 	return a.GetTransactions("", today, today)
@@ -433,6 +523,16 @@ func (a *App) UpdateTransactionStatus(id uint, status string) error {
 	if status == "done" || status == "paid" {
 		now := time.Now()
 		updates["completed_at"] = &now
+	}
+	return db().Model(&models.Transaction{}).Where("id = ?", id).Updates(updates).Error
+}
+
+func (a *App) ProcessPayment(id uint, paymentMethod string) error {
+	now := time.Now()
+	updates := map[string]interface{}{
+		"status":         "paid",
+		"payment_method": paymentMethod,
+		"completed_at":   &now,
 	}
 	return db().Model(&models.Transaction{}).Where("id = ?", id).Updates(updates).Error
 }
@@ -452,6 +552,55 @@ func (a *App) CancelTransaction(id uint) error {
 	}
 
 	return db().Model(&tx).Update("status", "cancelled").Error
+}
+
+// ============================================================
+// EXPENSES (PENGELUARAN)
+// ============================================================
+
+func (a *App) GetExpenses(dateFrom, dateTo string) []models.Expense {
+	var expenses []models.Expense
+	q := db().Order("date DESC, created_at DESC")
+	if dateFrom != "" {
+		q = q.Where("date >= ?", dateFrom)
+	}
+	if dateTo != "" {
+		q = q.Where("date <= ?", dateTo)
+	}
+	q.Find(&expenses)
+	return expenses
+}
+
+func (a *App) CreateExpense(date, category, name string, amount float64, notes string) (models.Expense, error) {
+	exp := models.Expense{
+		Date:     date,
+		Category: category,
+		Name:     name,
+		Amount:   amount,
+		Notes:    notes,
+	}
+	if result := db().Create(&exp); result.Error != nil {
+		return models.Expense{}, result.Error
+	}
+	return exp, nil
+}
+
+func (a *App) UpdateExpense(id uint, date, category, name string, amount float64, notes string) (models.Expense, error) {
+	var exp models.Expense
+	if result := db().First(&exp, id); result.Error != nil {
+		return models.Expense{}, fmt.Errorf("pengeluaran tidak ditemukan")
+	}
+	exp.Date = date
+	exp.Category = category
+	exp.Name = name
+	exp.Amount = amount
+	exp.Notes = notes
+	db().Save(&exp)
+	return exp, nil
+}
+
+func (a *App) DeleteExpense(id uint) error {
+	return db().Delete(&models.Expense{}, id).Error
 }
 
 // ============================================================

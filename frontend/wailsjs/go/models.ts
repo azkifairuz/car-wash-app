@@ -20,6 +20,98 @@ export namespace backend {
 	        this.quantity = source["quantity"];
 	    }
 	}
+	export class DailyExportRow {
+	    date: string;
+	    dayName: string;
+	    pendapatan: number;
+	    detailing: number;
+	    totalKend: number;
+	    kendByType: Record<string, number>;
+	
+	    static createFrom(source: any = {}) {
+	        return new DailyExportRow(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.date = source["date"];
+	        this.dayName = source["dayName"];
+	        this.pendapatan = source["pendapatan"];
+	        this.detailing = source["detailing"];
+	        this.totalKend = source["totalKend"];
+	        this.kendByType = source["kendByType"];
+	    }
+	}
+	export class ExportTransactionResult {
+	    rows: DailyExportRow[];
+	    totalPendapatan: number;
+	    totalDetailing: number;
+	    totalKend: number;
+	    kendByType: Record<string, number>;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportTransactionResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rows = this.convertValues(source["rows"], DailyExportRow);
+	        this.totalPendapatan = source["totalPendapatan"];
+	        this.totalDetailing = source["totalDetailing"];
+	        this.totalKend = source["totalKend"];
+	        this.kendByType = source["kendByType"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PrinterConfig {
+	    id: number;
+	    mode: string;
+	    networkIp: string;
+	    networkPort: string;
+	    usbName: string;
+	    paperWidth: string;
+	    storeName: string;
+	    storeAddr: string;
+	    storePhone: string;
+	    footerText: string;
+	    autoPrint: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PrinterConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.mode = source["mode"];
+	        this.networkIp = source["networkIp"];
+	        this.networkPort = source["networkPort"];
+	        this.usbName = source["usbName"];
+	        this.paperWidth = source["paperWidth"];
+	        this.storeName = source["storeName"];
+	        this.storeAddr = source["storeAddr"];
+	        this.storePhone = source["storePhone"];
+	        this.footerText = source["footerText"];
+	        this.autoPrint = source["autoPrint"];
+	    }
+	}
 
 }
 
@@ -71,6 +163,32 @@ export namespace models {
 	        this.isActive = source["isActive"];
 	        this.validFrom = source["validFrom"];
 	        this.validUntil = source["validUntil"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class Expense {
+	    id: number;
+	    date: string;
+	    category: string;
+	    name: string;
+	    amount: number;
+	    notes: string;
+	    createdAt: string;
+	    updatedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Expense(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.date = source["date"];
+	        this.category = source["category"];
+	        this.name = source["name"];
+	        this.amount = source["amount"];
+	        this.notes = source["notes"];
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
 	    }

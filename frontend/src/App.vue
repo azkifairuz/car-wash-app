@@ -24,6 +24,9 @@
         <router-link to="/history" class="nav-item" active-class="active">
           <span class="nav-icon">📋</span>Riwayat
         </router-link>
+        <router-link to="/pengeluaran" class="nav-item" active-class="active">
+          <span class="nav-icon">💸</span>Pengeluaran
+        </router-link>
 
         <template v-if="auth.isSuperAdmin">
           <div class="nav-section">Admin</div>
@@ -41,6 +44,9 @@
           </router-link>
           <router-link to="/manage/shifts" class="nav-item" active-class="active">
             <span class="nav-icon">📅</span>Kelola Shift
+          </router-link>
+          <router-link to="/printer-setting" class="nav-item" active-class="active">
+            <span class="nav-icon">🖨️</span>Setting Printer
           </router-link>
         </template>
       </nav>

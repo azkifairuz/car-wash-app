@@ -7,6 +7,9 @@
         <button class="btn btn-sm btn-export" @click="exportExcel" :disabled="txs.length===0 || exporting" title="Export ke Excel">
           {{ exporting ? '⏳ Menyimpan...' : '📥 Export Excel' }}
         </button>
+        <button class="btn btn-sm btn-export-detail" @click="exportDetailExcel" :disabled="txs.length===0 || exportingDetail" title="Export Laporan Detail Pendapatan">
+          {{ exportingDetail ? '⏳ Menyimpan...' : '📊 Export Detail' }}
+        </button>
       </div>
     </div>
     <div class="table-wrap" v-if="txs.length > 0">
@@ -65,6 +68,7 @@ const statusLabel = s => ({ washing:'Proses', done:'Selesai', paid:'Lunas', canc
 const fmtTime = t => { try { return new Date(t).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) } catch(e) { return t } }
 async function load() { try { const r = await callBackend('GetTransactions', filter.value, '', ''); if (r) txs.value = r } catch(e){} }
 const exporting = ref(false)
+const exportingDetail = ref(false)
 
 async function exportExcel() {
   if (txs.value.length === 0) return
@@ -118,6 +122,106 @@ async function exportExcel() {
   }
 }
 
+async function exportDetailExcel() {
+  if (txs.value.length === 0) return
+  exportingDetail.value = true
+
+  try {
+    // ---- Aggregate items from all loaded transactions ----
+    const carwashMap = {}   // itemName -> { qty, unitPrice, total }
+    const menuMap = {}      // itemName -> { qty, unitPrice, total }
+
+    for (const tx of txs.value) {
+      if (!tx.items) continue
+      for (const it of tx.items) {
+        const map = it.itemType === 'package' ? carwashMap : menuMap
+        if (!map[it.itemName]) {
+          map[it.itemName] = { qty: 0, unitPrice: it.price || 0, total: 0 }
+        }
+        map[it.itemName].qty += it.quantity
+        map[it.itemName].total += it.subtotal
+      }
+    }
+
+    // ---- Build date label ----
+    const today = new Date()
+    const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
+    const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+    const dateLabel = `${dayNames[today.getDay()]}, ${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`
+
+    // ---- Grand total ----
+    const grandTotal = txs.value.reduce((s, tx) => s + (tx.total || 0), 0)
+
+    // ---- Carwash totals ----
+    const carwashRows = Object.entries(carwashMap)
+    const carwashTotal = carwashRows.reduce((s, [, v]) => s + v.total, 0)
+    const carwashQtyTotal = carwashRows.reduce((s, [, v]) => s + v.qty, 0)
+
+    // ---- Menu totals ----
+    const menuRows = Object.entries(menuMap)
+    const menuTotal = menuRows.reduce((s, [, v]) => s + v.total, 0)
+
+    // ---- Format number Indonesian style ----
+    const fmtNum = n => Math.round(n).toLocaleString('id-ID')
+
+    // ---- Build AOA rows ----
+    const aoa = []
+
+    // Header: date
+    aoa.push([dateLabel, '', '', ''])
+    aoa.push(['', '', '', ''])
+
+    // Section 1: Carwash
+    aoa.push(['1. PENDAPATAN CARWASH', '', '', ''])
+    aoa.push(['Jumlah', 'Keterangan', 'Harga', 'Jumlah'])
+    for (const [name, v] of carwashRows) {
+      aoa.push([v.qty, name, fmtNum(v.unitPrice), fmtNum(v.total)])
+    }
+    aoa.push([carwashQtyTotal, '', '', fmtNum(carwashTotal)])
+    aoa.push(['', '', '', ''])
+
+    // Section 2: Menu (Makanan & Minuman)
+    if (menuRows.length > 0) {
+      aoa.push(['2. PENDAPATAN MAKANAN & MINUMAN', '', '', ''])
+      for (const [name, v] of menuRows) {
+        aoa.push(['', name, '', fmtNum(v.total)])
+      }
+      aoa.push(['', '', '', fmtNum(menuTotal)])
+      aoa.push(['', '', '', ''])
+    }
+
+    // Grand total
+    const sectionNo = menuRows.length > 0 ? '3' : '2'
+    aoa.push([`${sectionNo}. JUMLAH`, '', '', fmtNum(grandTotal)])
+
+    // ---- Build worksheet ----
+    const ws = XLSX.utils.aoa_to_sheet(aoa)
+
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 16 },
+      { wch: 18 },
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Laporan Pendapatan')
+
+    const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' })
+    const dateStr = today.toISOString().slice(0, 10)
+    const filename = `Laporan_Pendapatan_Detail_${dateStr}.xlsx`
+
+    const result = await callBackend('SaveExcelFile', base64, filename)
+    if (result) alert('✅ File berhasil disimpan!')
+  } catch (e) {
+    console.error('Export detail error:', e)
+    alert('❌ Gagal export: ' + (e.message || e))
+  } finally {
+    exportingDetail.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -126,6 +230,9 @@ onMounted(load)
 .btn-export{background:linear-gradient(135deg,#10b981,#059669)!important;color:#fff!important;border:none!important;font-weight:700;letter-spacing:.3px;transition:all .2s ease}
 .btn-export:hover{background:linear-gradient(135deg,#059669,#047857)!important;transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,185,129,.35)}
 .btn-export:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-export-detail{background:linear-gradient(135deg,#6366f1,#4f46e5)!important;color:#fff!important;border:none!important;font-weight:700;letter-spacing:.3px;transition:all .2s ease}
+.btn-export-detail:hover{background:linear-gradient(135deg,#4f46e5,#4338ca)!important;transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.35)}
+.btn-export-detail:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .d-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;color:var(--t2)}
 .d-items{margin:12px 0;padding:10px;background:var(--surface);border-radius:var(--rs);display:flex;flex-direction:column;gap:6px}
 .d-item{display:flex;justify-content:space-between;font-size:12px;gap:10px}.d-item span:first-child{flex:1}
